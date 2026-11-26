@@ -1,0 +1,8 @@
+# Local-only project rules (not part of the submission)
+CLAUDE.md
+
+# Original API assignment (graded separately, kept read-only)
+Reference/
+
+# Local secrets: never commit
+.env
