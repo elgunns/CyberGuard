@@ -34,11 +34,22 @@ Owner names are first names, as used throughout the team documents (full names i
 
 | ID | Task (suggested commit) | Owner | Files | Depends on | How to test |
 |---|---|---|---|---|---|
-| 2.1 | Add `.env.example` and extend `.gitignore` with Python caches, uploads and runtime files (`chore: add .env.example and extend .gitignore`) | Elgun | `.env.example`, `.gitignore` | 1.1, D-01, D-10 | `git check-ignore -v .env Reference/x` reports both ignored; `.env.example` has no real values |
-| 2.2 | FastAPI and uvicorn (same pins as original), psycopg, python-dotenv, pytest, httpx (`chore: add Python requirements files`) | Elgun | `requirements.txt`, `requirements-dev.txt` | 2.1 | `pip install -r requirements-dev.txt` in a new venv |
-| 2.3 | Reads environment and `.env`; a missing variable gives a clear error (`feat(config): load settings from environment`) | Farid | `backend/app/__init__.py`, `backend/app/config.py`, `backend/tests/conftest.py`, `backend/tests/test_config.py` | 2.2 | `python -m pytest backend/tests/test_config.py -q` |
-| 2.4 | Tables for analyses, events, incidents and ai_outputs; connection helper (`feat(db): add PostgreSQL schema and connection helper`) | Elgun | `database/schema.sql`, `database/init_db.py`, `backend/app/db.py`, `backend/tests/test_db.py` | 2.3, local PostgreSQL and test database | `python database/init_db.py`, then `python -m pytest backend/tests/test_db.py -q` |
-| 2.5 | App object, with error and success envelopes copied from the original and adapted (`feat(app): add FastAPI skeleton with error and response helpers`) | Elgun | `backend/app/main.py`, `backend/app/errors.py`, `backend/app/responses.py` | 2.4 | `python -m uvicorn backend.app.main:app` starts; `GET /docs` loads; `python -m pytest backend/tests -q` passes |
+| 2.1 | Add `.env.example`, and extend `.gitignore` with secret, log and Python cache rules (`chore: add .env.example and extend .gitignore`) | Elgun | `.env.example`, `.gitignore` | 1.1, D-01, D-10 | `git check-ignore -v .env logs/x.log Reference/x` reports all three ignored; `git check-ignore -v .env.example` shows the `!.env.example` rule (tracked) |
+| 2.2 | Pinned runtime and dev requirements: fastapi, uvicorn (same pins as original), psycopg[binary], python-dotenv, pytest, httpx (`chore: add Python requirements files`) | Elgun | `requirements.txt`, `requirements-dev.txt` | 2.1 | `python -m pip install -r requirements-dev.txt` in a new venv |
+| 2.3 | Settings from environment and `.env`; a missing `DATABASE_URL` gives a clear error; the repr hides the password (`feat(config): load settings from environment`) | Elgun | `backend/app/__init__.py`, `backend/app/config.py`, `pytest.ini`, `backend/tests/test_config.py` | 2.2 | `python -m pytest backend/tests/test_config.py -q` (no database needed) |
+| 2.4 | Schema for analyses, parsed events, incidents, AI outputs and sent alerts; psycopg connection helper; init script; test fixtures that refuse non-`_test` databases (`feat(db): add PostgreSQL schema, init script and connection helper`) | Elgun | `database/schema.sql`, `database/init_db.py`, `backend/app/db.py`, `backend/tests/conftest.py`, `backend/tests/test_db.py` | 2.3, local PostgreSQL, `cyberguard_test` database | `python database/init_db.py`, then `python -m pytest backend/tests/test_db.py -q` |
+| 2.5 | Console and file logging to `logs/cyberguard.log`; secrets are never logged (`feat(logging): configure console and file logging`) | Elgun | `backend/app/logging_config.py` | 2.3 | Start the server; the log file gets a "backend started" line; `Select-String` for `postgresql://` finds nothing |
+| 2.6 | FastAPI app factory, with error and success envelopes ported from the original (auth removed, D-01) (`feat(app): add FastAPI app factory with error and response helpers`) | Elgun | `backend/app/main.py` (factory and error handlers only), `backend/app/errors.py`, `backend/app/responses.py`, `backend/app/routes/__init__.py` | 2.5 | `python -m pytest backend/tests/test_config.py -q`; unknown URL returns the 404 error envelope |
+| 2.7 | `GET /health`: 200 when the database answers; 503 with `status: degraded` when it does not (FR-24) (`feat(health): add GET /health with database status`) | **Farid** | `backend/app/routes/health.py`, `backend/app/main.py` (adds the health router), `backend/tests/test_health.py` | 2.4, 2.6 | `python -m pytest backend/tests/test_health.py -q`; `curl http://127.0.0.1:8000/health` returns 200 with the database up, 503 with it stopped |
+| 2.8 | Setup section: venv, install, `.env`, databases, init script, server, tests; Windows commands first (`docs: add setup section to README`) | Elgun | `README.md` | 2.7 | Follow the Setup section on a clean folder |
+| 2.9 | Traceability: FR-24 Done; FR-23 and FR-29 partial evidence (`docs: update traceability after Phase 2`) | Elgun | `docs/REQUIREMENTS_TRACEABILITY.md` | 2.7 | Summary counts match the table (Done 1, Partial 6, Not started 28) |
+| 2.10 | Phase 2 task plan with actual files and owners (`docs: record Phase 2 commits in task plan`) | Elgun | `docs/TEAM_COMMIT_PLAN.md` | 2.9 | Every Phase 2 file is listed in exactly one commit row |
+
+**Notes for Phase 2:**
+- Owners follow the team request: Elgun for every commit except `GET /health` (2.7, Farid). The earlier draft listed 2.3 (config) as Farid; it is Elgun now.
+- `backend/app/main.py` appears in 2.6 and 2.7. The health router line is added in 2.7, so 2.6 is consistent on its own.
+- `backend/tests/conftest.py` first appears in 2.4, because its fixtures use the database helper.
+- The app is started with `--factory` (`python -m uvicorn backend.app.main:create_app --factory`), not `backend.app.main:app`, so importing the module does not read `.env`.
 
 **Phase 2 exit check:** the test command passes on every member's computer.
 
@@ -159,7 +170,7 @@ Owner names are first names, as used throughout the team documents (full names i
 | Phase | Tasks |
 |---|---|
 | 1 | 6 |
-| 2 | 5 |
+| 2 | 10 |
 | 3 | 4 |
 | 4 | 3 |
 | 5 | 5 |
@@ -170,6 +181,6 @@ Owner names are first names, as used throughout the team documents (full names i
 | 10 | 5 |
 | 11 | 4 |
 | 12 | 4 |
-| **Total** | **51** |
+| **Total** | **56** |
 
 Each task is small and maps to one requirement group. The owner column matches `TEAM_RESPONSIBILITIES.md`. If a task grows beyond one logical change during implementation, split it before committing.

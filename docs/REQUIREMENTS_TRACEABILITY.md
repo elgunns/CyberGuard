@@ -9,7 +9,7 @@ Compared against: the existing API in `Reference/api-original/` (see `EXISTING_A
 |---|---|
 | **Not started** | Nothing in the existing API meets this requirement |
 | **Partial** | The existing API has a related piece that must be changed or extended |
-| **Done** | Implemented and tested in the new project (no requirement is done yet; Phase 1 covers documentation only) |
+| **Done** | Implemented and tested in the new project (only FR-24 is done so far, from Phase 2) |
 
 **Priority** is taken from the proposal (Must / Should / Could).
 
@@ -48,14 +48,14 @@ Compared against: the existing API in `Reference/api-original/` (see `EXISTING_A
 | FR-20 | Must | Sanitized evidence payload; no whole file, raw lines or usernames to AI | Not started | — | 9 | Farid | `backend/app/ai/sanitizer.py` |
 | FR-21 | Must | If AI fails or times out (20 s), show incidents with "AI unavailable" message, keep analysis, log failure | Not started | — | 9 | Farid | `backend/app/ai/gemini_client.py` |
 | FR-22 | Must | Telegram alert on Critical incident (incident ID, analysis ID, type, severity, time) | Not started | — | 10 | Farid | `backend/app/alerts/telegram.py`, `backend/app/alerts/rules.py` |
-| FR-23 | Must | Log unhandled exceptions and AI failures with timestamp, endpoint, error type | **Partial** | Global handler returns JSON 500 but logs nothing (`errors.py`) | 10 (logging), 3 (first use) | Farid (logging), Elgun (handler) | `backend/app/logging_config.py`, `backend/app/errors.py` |
-| FR-24 | Must | `GET /health` returns backend and database status | Not started | No health endpoint | 10 | Elgun (endpoint) | `backend/app/routes/health.py` |
+| FR-23 | Must | Log unhandled exceptions and AI failures with timestamp, endpoint, error type | **Partial** | Phase 2: `logging_config.py` writes console and `logs/cyberguard.log`; `errors.py` logs method, path and error type for unhandled 500s (traceback to file only). AI failures not yet logged | 10 (logging), 3 (first use) | Farid (logging), Elgun (handler) | `backend/app/logging_config.py`, `backend/app/errors.py` |
+| FR-24 | Must | `GET /health` returns backend and database status | **Done** | Phase 2: `backend/app/routes/health.py`. Returns 200 `status: ok` when the database answers; 503 `status: degraded` when it does not. Tested in `backend/tests/test_health.py` (run against a scratch PostgreSQL 18 test database). Built in Phase 2, not Phase 10 | 2 (built early), 10 (health checker) | Farid (endpoint) | `backend/app/routes/health.py` |
 | FR-25 | Must | Separate health-checker script, every 60 s, Telegram alert after 3 failures | Not started | — | 10 | Farid | `monitoring/health_checker.py` |
 | FR-26 | Must | Telegram alert on 5 HTTP 500 errors within a rolling 5-minute window | Not started | — | 10 | Farid | `backend/app/alerts/rules.py` |
 | FR-27 | Must | Telegram alert on 3 consecutive AI request failures or timeouts | Not started | — | 10 | Farid | `backend/app/alerts/rules.py` |
 | FR-28a | Should | Suppress duplicate operational alerts of same category for 10 minutes | Not started | — | 10 | Farid | `backend/app/alerts/cooldown.py` |
 | FR-28b | Should | Send Critical incident notification at most once per incident ID | Not started | — | 10 | Farid | `backend/app/alerts/cooldown.py` |
-| FR-29 | Must | Read Telegram token, chat ID, Gemini key, DB credentials from environment or git-ignored `.env`; never in frontend, source or logs | **Partial** | Only `.env` is listed in the misnamed `.gitignore.txt`. No config code | 2 (DB), 9 (Gemini), 10 (Telegram) | Elgun (DB), Farid (AI and Telegram) | `backend/app/config.py`, `.env.example`, `.gitignore` |
+| FR-29 | Must | Read Telegram token, chat ID, Gemini key, DB credentials from environment or git-ignored `.env`; never in frontend, source or logs | **Partial** | Phase 2: `backend/app/config.py` reads `DATABASE_URL` and `TEST_DATABASE_URL` from the environment or `.env`; the repr hides the URL; `.gitignore` ignores `.env`. Gemini and Telegram settings not read yet | 2 (DB), 9 (Gemini), 10 (Telegram) | Elgun (DB), Farid (AI and Telegram) | `backend/app/config.py`, `.env.example`, `.gitignore` |
 
 ---
 
@@ -64,10 +64,12 @@ Compared against: the existing API in `Reference/api-original/` (see `EXISTING_A
 | Status | Count (of 35 rows) | Rows |
 |---|---|---|
 | Partial | 6 | FR-08, FR-10, FR-11, FR-13, FR-23, FR-29 |
-| Not started | 29 | all other rows |
-| Done | 0 | none yet |
+| Not started | 28 | all other rows |
+| Done | 1 | FR-24 (Phase 2) |
 
-**Note on FR-29:** the original project has a `.env` entry, but it sits in a file named `.gitignore.txt`, which Git does not read. The entry is recorded as partial only because it shows the intent; no configuration code exists.
+**Note on FR-29:** the original project has a `.env` entry, but it sits in a file named `.gitignore.txt`, which Git does not read. In Phase 2 the new project added configuration code for the database settings only; Gemini and Telegram settings remain for Phases 9 and 10, so FR-29 stays Partial.
+
+**Note on FR-24:** built in Phase 2 at the team's request, earlier than the Phase 10 plan. The Phase 10 work (health checker script) is still open under FR-25.
 
 **Note on partial items:** "partial" means the **idea or data shape** exists in the API. None of the partial items can be counted as implemented in the new project until the new code and its tests exist.
 
