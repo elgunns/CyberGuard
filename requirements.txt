@@ -1,0 +1,5 @@
+# Runtime dependencies (pinned). fastapi and uvicorn use the same versions as the original API.
+fastapi==0.162.5
+uvicorn==0.54.0
+psycopg[binary]==3.3.9
+python-dotenv==1.2.4
