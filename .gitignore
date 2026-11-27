@@ -1,8 +1,31 @@
 # Local-only project rules (not part of the submission)
 CLAUDE.md
 
+# Secrets: never commit. Only .env.example is tracked.
+.env
+.env.*
+!.env.example
+
 # Original API assignment (graded separately, kept read-only)
 Reference/
 
-# Local secrets: never commit
-.env
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Project runtime
+uploads/
+logs/
+*.tmp
+
+# Editors
+.vscode/
+.idea/
+
+# Packaging
+*.zip
